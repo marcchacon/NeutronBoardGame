@@ -21,24 +21,16 @@ var player2 = jsboard.piece({ text: "J2", textIndent: "-9999px", background: "bl
 var common = jsboard.piece({ text: "CO", textIndent: "-9999px", background: "green", width: "50px", height: "50px", margin: "0 auto" });
 
 
-// put pieces on board
-var j1 = [];
-var j2 = [];
-for (let i = 0; i < b.cols(); i++) {
-    j1.push(player1.clone());
-    j2.push(player2.clone());
-    b.cell([0,i]).place(j2[i]);
-    j1[i].addEventListener("click", function () { showMoves(this); });
-    j2[i].addEventListener("click", function () { showMoves(this); });
-    b.cell([b.rows()-1,i]).place(j1[i]);
-}
-var co = common.clone();
-b.cell([2,2]).place(co);
-co.addEventListener("click", function () { showMoves(this); });
 
 // variables for turns, piece to move and its locs
 var turn = ["CO", "J1", "CO", "J2"];
 var bindMoveLocs, bindMovePiece;
+var gamemode = false;
+
+// put pieces on board
+var j1 = [];
+var j2 = [];
+resetBoard(true);
 
 // show new locations 
 function showMoves(piece) {
@@ -125,26 +117,32 @@ function movePiece() {
 function resetBoard(hard = false) {
     for (var r=0; r<b.rows(); r++) {
         for (var c=0; c<b.cols(); c++) {
-            b.cell([0,c]).style({background: "lightblue" });
-            b.cell([b.rows()-1,c]).style({background: "pink" });
             b.cell([r,c]).DOM().classList.remove("green");
             b.cell([r,c]).DOM().classList.remove("blue");
             b.cell([r,c]).DOM().classList.remove("red");
             b.cell([r,c]).removeOn("click", movePiece);
             if (hard) b.cell([r,c]).rid();
+            if(gamemode) {
+                b.cell([0,c]).style({background: "pink" });
+                b.cell([b.rows()-1,c]).style({background: "lightblue" });
+            } else {
+                b.cell([0,c]).style({background: "lightblue" });
+                b.cell([b.rows()-1,c]).style({background: "pink" });
+            }
         }
     }
     if (hard) {
-            // put pieces on board
+        // put pieces on board
         var j1 = [];
         var j2 = [];
         for (let i = 0; i < b.cols(); i++) {
+            console.log(gamemode)
             j1.push(player1.clone());
             j2.push(player2.clone());
-            b.cell([0,i]).place(j1[i]);
+            b.cell([0,i]).place(j2[i]);
             j1[i].addEventListener("click", function () { showMoves(this); });
             j2[i].addEventListener("click", function () { showMoves(this); });
-            b.cell([b.rows()-1,i]).place(j2[i]);
+            b.cell([b.rows()-1,i]).place(j1[i]);
         }
         var co = common.clone();
         b.cell([2,2]).place(co);
@@ -242,8 +240,26 @@ function getMoves(piece) {
 function winCheck() {
     var game = getGameboard()
     if (game[0].includes("3")) {
-        alert("J1 WINS")
+        if(gamemode) alert("J1 WINS")
+        else alert("J2 WINS")
     } else if (game[b.rows() - 1].includes("3")) {
-        alert("J2 WINS")
+        if(gamemode) alert("J2 WINS")
+        else alert("J1 WINS")
     }
 }
+
+//Listeners
+document.getElementById("reset").addEventListener("click", function () { resetBoard(true); });
+document.getElementById("gamemodeN").addEventListener("click", function () { 
+    gamemode = false;
+    resetBoard(true);
+    this.disabled = true;
+    document.getElementById("gamemodeI").disabled = false;
+
+ });
+document.getElementById("gamemodeI").addEventListener("click", function () { 
+    gamemode = true;
+    resetBoard(true);
+    this.disabled = true;
+    document.getElementById("gamemodeN").disabled = false;
+ });
