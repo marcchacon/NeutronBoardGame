@@ -125,6 +125,8 @@ function movePiece() {
 function resetBoard(hard = false) {
     for (var r=0; r<b.rows(); r++) {
         for (var c=0; c<b.cols(); c++) {
+            b.cell([0,c]).style({background: "lightblue" });
+            b.cell([b.rows()-1,c]).style({background: "pink" });
             b.cell([r,c]).DOM().classList.remove("green");
             b.cell([r,c]).DOM().classList.remove("blue");
             b.cell([r,c]).DOM().classList.remove("red");
