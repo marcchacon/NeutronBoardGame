@@ -82,7 +82,17 @@ function showMoves(piece) {
  */
 function bindMoveEvents(locs) {
     for (var i=0; i<locs.length; i++) {
-        b.cell(locs[i]).DOM().classList.add("green");
+        switch (turn[0]) {
+            case "J1":
+                b.cell(locs[i]).DOM().classList.add("red");
+                break;
+            case "J2":
+                b.cell(locs[i]).DOM().classList.add("blue");
+                break;
+            case "CO":
+                b.cell(locs[i]).DOM().classList.add("green");
+                break;
+        }
         b.cell(locs[i]).on("click", movePiece);  
     }
 }
@@ -116,6 +126,8 @@ function resetBoard(hard = false) {
     for (var r=0; r<b.rows(); r++) {
         for (var c=0; c<b.cols(); c++) {
             b.cell([r,c]).DOM().classList.remove("green");
+            b.cell([r,c]).DOM().classList.remove("blue");
+            b.cell([r,c]).DOM().classList.remove("red");
             b.cell([r,c]).removeOn("click", movePiece);
             if (hard) b.cell([r,c]).rid();
         }
