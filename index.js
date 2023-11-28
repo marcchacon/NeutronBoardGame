@@ -27,10 +27,10 @@ var j2 = [];
 for (let i = 0; i < b.cols(); i++) {
     j1.push(player1.clone());
     j2.push(player2.clone());
-    b.cell([0,i]).place(j1[i]);
+    b.cell([0,i]).place(j2[i]);
     j1[i].addEventListener("click", function () { showMoves(this); });
     j2[i].addEventListener("click", function () { showMoves(this); });
-    b.cell([b.rows()-1,i]).place(j2[i]);
+    b.cell([b.rows()-1,i]).place(j1[i]);
 }
 var co = common.clone();
 b.cell([2,2]).place(co);
@@ -44,7 +44,7 @@ var bindMoveLocs, bindMovePiece;
 function showMoves(piece) {
     //console.log(b.cell(piece.parentNode).get())
     if (b.cell(piece.parentNode).get() != turn[0]) {
-        console.log("not your turn")
+        alert(`Not your turn! It's ${turn[0]}'s turn!`)
         return
     }
     //Reset board
@@ -66,7 +66,7 @@ function showMoves(piece) {
                 fixedLocs.push(arr[i]); 
         newLocs = fixedLocs;
     })(newLocs); 
-
+    if (newLocs.length==0) alert(`No moves available! ${turn.pop()} wins!`);
     // bind green spaces to movement of piece
     bindMoveLocs = newLocs.slice();
     bindMovePiece = piece; 
@@ -109,14 +109,35 @@ function movePiece() {
  * Reset the board by removing all green cells and
  * removing all click events
  * 
+ * @param {boolean} hard If true, also resets the game
  * @return {void}
  */
-function resetBoard() {
+function resetBoard(hard = false) {
     for (var r=0; r<b.rows(); r++) {
         for (var c=0; c<b.cols(); c++) {
             b.cell([r,c]).DOM().classList.remove("green");
             b.cell([r,c]).removeOn("click", movePiece);
+            if (hard) b.cell([r,c]).rid();
         }
+    }
+    if (hard) {
+            // put pieces on board
+        var j1 = [];
+        var j2 = [];
+        for (let i = 0; i < b.cols(); i++) {
+            j1.push(player1.clone());
+            j2.push(player2.clone());
+            b.cell([0,i]).place(j1[i]);
+            j1[i].addEventListener("click", function () { showMoves(this); });
+            j2[i].addEventListener("click", function () { showMoves(this); });
+            b.cell([b.rows()-1,i]).place(j2[i]);
+        }
+        var co = common.clone();
+        b.cell([2,2]).place(co);
+        co.addEventListener("click", function () { showMoves(this); });
+
+        // variables for turns, piece to move and its locs
+        turn = ["CO", "J1", "CO", "J2"];
     }
 }
 
