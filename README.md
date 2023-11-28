@@ -10,4 +10,8 @@ I know BGG mentions a slightly different rules, but this is how I play with my f
 ### Winning condition
 The main game consists on moving the common piece to your space. Your space consists of the initial row your pieces start at. If You can't move the Neutron on your turn, you lose.
 ### Inverted Game Mode
-In this mode, you have to place the Neutron at the other's field! It's a small change but it changes the prespective of the game.
+In this mode, you have to place the Neutron in the other's field! It's a small change, but it changes the perspective of the game.
+
+## 7x7 Board
+In this mode, there are two Neutrons, something that can make the game a bit more challenging!
+<sub>There's a way that P1 always wins at turn 2
