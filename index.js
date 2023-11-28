@@ -42,7 +42,7 @@ var bindMoveLocs, bindMovePiece;
 
 // show new locations 
 function showMoves(piece) {
-    console.log(b.cell(piece.parentNode).get())
+    //console.log(b.cell(piece.parentNode).get())
     if (b.cell(piece.parentNode).get() != turn[0]) {
         console.log("not your turn")
         return
@@ -72,9 +72,6 @@ function showMoves(piece) {
     bindMovePiece = piece; 
     bindMoveEvents(bindMoveLocs);
 
-    var temp = turn.shift();
-    turn.push(temp);
-
 
 }
 
@@ -100,6 +97,11 @@ function movePiece() {
     if (bindMoveLocs.indexOf(userClick)) {
         b.cell(userClick).place(bindMovePiece);
         resetBoard();
+
+        var temp = turn.shift();
+        turn.push(temp);
+
+        winCheck();
     }
 }
 
@@ -118,6 +120,11 @@ function resetBoard() {
     }
 }
 
+/**
+ * Aux function to get the gameboard
+ * 
+ * @returns {Array} Gameboard
+ */
 function getGameboard() {
 
     game = b.matrix()
@@ -141,11 +148,16 @@ function getGameboard() {
         });
     });
 
-    console.log("GAMEBOARD DONE: " + game)
+    //console.log("GAMEBOARD DONE: " + game)
 
     return game
 }
-
+/**
+ *  Get pieces possible moves
+ * 
+ * @param {Array} piece Piece position
+ * @returns {Array} Possible moves, empty if no moves
+ */
 function getMoves(piece) {
 
     var game = getGameboard()
@@ -187,4 +199,16 @@ function getMoves(piece) {
     });
 
     return moves
+}
+
+/**
+ * Check if someone has won
+ */
+function winCheck() {
+    var game = getGameboard()
+    if (game[0].includes("3")) {
+        alert("J1 WINS")
+    } else if (game[b.rows() - 1].includes("3")) {
+        alert("J2 WINS")
+    }
 }
