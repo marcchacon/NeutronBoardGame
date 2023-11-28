@@ -26,6 +26,7 @@ var common = jsboard.piece({ text: "CO", textIndent: "-9999px", background: "gre
 var turn = ["CO", "J1", "CO", "J2"];
 var bindMoveLocs, bindMovePiece;
 var gamemode = false;
+var started = false;
 
 // put pieces on board
 var j1 = [];
@@ -95,6 +96,7 @@ function bindMoveEvents(locs) {
  * @return {void}
  */
 function movePiece() {
+    started = true;
     var userClick = b.cell(this).where();
     if (bindMoveLocs.indexOf(userClick)) {
         b.cell(userClick).place(bindMovePiece);
@@ -115,6 +117,10 @@ function movePiece() {
  * @return {void}
  */
 function resetBoard(hard = false) {
+    if (hard && started){
+        var text = "Do you really want to restart the game?";
+        if (!confirm(text)) return
+    }
     for (var r=0; r<b.rows(); r++) {
         for (var c=0; c<b.cols(); c++) {
             b.cell([r,c]).DOM().classList.remove("green");
@@ -133,6 +139,7 @@ function resetBoard(hard = false) {
     }
     if (hard) {
         // put pieces on board
+        started = false;
         var j1 = [];
         var j2 = [];
         for (let i = 0; i < b.cols(); i++) {
@@ -272,13 +279,13 @@ document.getElementById("gamemodeN").addEventListener("click", function () {
     this.disabled = true;
     document.getElementById("gamemodeI").disabled = false;
 
- });
+});
 document.getElementById("gamemodeI").addEventListener("click", function () { 
     gamemode = true;
     resetBoard(true);
     this.disabled = true;
     document.getElementById("gamemodeN").disabled = false;
- });
+});
  document.getElementById("size5").addEventListener("click", function () {
     initTable();
     b = jsboard.board({ attach: "game", size: "5x5" });
@@ -286,7 +293,7 @@ document.getElementById("gamemodeI").addEventListener("click", function () {
     resetBoard(true);
     this.disabled = true;  
     document.getElementById("size7").disabled = false;
- });
+});
     document.getElementById("size7").addEventListener("click", function () {
         initTable();
         b = jsboard.board({ attach: "game", size: "7x7" });
@@ -294,4 +301,4 @@ document.getElementById("gamemodeI").addEventListener("click", function () {
         resetBoard(true);
         this.disabled = true;  
         document.getElementById("size5").disabled = false;
-    });
+});
