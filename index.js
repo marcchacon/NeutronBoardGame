@@ -147,6 +147,14 @@ function resetBoard(hard = false) {
         var co = common.clone();
         b.cell([2,2]).place(co);
         co.addEventListener("click", function () { showMoves(this); });
+        if (b.rows() == 7) {
+        var co2 = common.clone();
+        b.cell([3,2]).place(co);
+        b.cell([3,4]).place(co2);
+        co2.addEventListener("click", function () { showMoves(this); });
+        }
+
+
 
         // variables for turns, piece to move and its locs
         turn = ["CO", "J1", "CO", "J2"];
@@ -247,7 +255,15 @@ function winCheck() {
         else alert("J1 WINS")
     }
 }
-
+/**
+ * Init table to an Empty table
+ */
+function initTable() {
+    var table = document.getElementById("game");
+    while(table.rows.length > 0) { 
+    table.deleteRow(0);
+    }
+}
 //Listeners
 document.getElementById("reset").addEventListener("click", function () { resetBoard(true); });
 document.getElementById("gamemodeN").addEventListener("click", function () { 
@@ -263,3 +279,19 @@ document.getElementById("gamemodeI").addEventListener("click", function () {
     this.disabled = true;
     document.getElementById("gamemodeN").disabled = false;
  });
+ document.getElementById("size5").addEventListener("click", function () {
+    initTable();
+    b = jsboard.board({ attach: "game", size: "5x5" });
+    b.cell("each").style({ width: "65px", height: "65px" });
+    resetBoard(true);
+    this.disabled = true;  
+    document.getElementById("size7").disabled = false;
+ });
+    document.getElementById("size7").addEventListener("click", function () {
+        initTable();
+        b = jsboard.board({ attach: "game", size: "7x7" });
+        b.cell("each").style({ width: "65px", height: "65px" });
+        resetBoard(true);
+        this.disabled = true;  
+        document.getElementById("size5").disabled = false;
+    });
