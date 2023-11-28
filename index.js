@@ -18,7 +18,7 @@ b.cell("each").style({ width: "65px", height: "65px" });
 // setup pieces
 var player1 = jsboard.piece({ text: "J1", textIndent: "-9999px", background: "red", width: "50px", height: "50px", margin: "0 auto" });
 var player2 = jsboard.piece({ text: "J2", textIndent: "-9999px", background: "blue", width: "50px", height: "50px", margin: "0 auto" });
-var common = jsboard.piece({ text: "J2", textIndent: "-9999px", background: "green", width: "50px", height: "50px", margin: "0 auto" });
+var common = jsboard.piece({ text: "CO", textIndent: "-9999px", background: "green", width: "50px", height: "50px", margin: "0 auto" });
 
 
 // put pieces on board
@@ -36,12 +36,17 @@ var co = common.clone();
 b.cell([2,2]).place(co);
 co.addEventListener("click", function () { showMoves(this); });
 
-// variables for piece to move and its locs
+// variables for turns, piece to move and its locs
+var turn = ["CO", "J1", "CO", "J2"];
 var bindMoveLocs, bindMovePiece;
 
 // show new locations 
 function showMoves(piece) {
-    console.log(piece)
+    console.log(b.cell(piece.parentNode).get())
+    if (b.cell(piece.parentNode).get() != turn[0]) {
+        console.log("not your turn")
+        return
+    }
     //Reset board
     resetBoard()
 
@@ -66,6 +71,10 @@ function showMoves(piece) {
     bindMoveLocs = newLocs.slice();
     bindMovePiece = piece; 
     bindMoveEvents(bindMoveLocs);
+
+    var temp = turn.shift();
+    turn.push(temp);
+
 
 }
 
@@ -149,7 +158,7 @@ function getMoves(piece) {
 
             stopWhile = false
 
-            console.log("seguent casella: " + (game[newpos[0] + dir[0]][newpos[1] + dir[1]]) + "  pot avançar?  " + (game[newpos[0] + dir[0]][newpos[1] + dir[1]] === "0"))
+            //console.log("seguent casella: " + (game[newpos[0] + dir[0]][newpos[1] + dir[1]]) + "  pot avançar?  " + (game[newpos[0] + dir[0]][newpos[1] + dir[1]] === "0"))
 
             switch (game[newpos[0] + dir[0]][newpos[1] + dir[1]]) {
 
@@ -171,10 +180,10 @@ function getMoves(piece) {
                     stopWhile = true
                     break;
             }
-            if (newpos !== piece) moves.push(newpos);
             if (stopWhile) break
 
         }
+        if (newpos !== piece) moves.push(newpos);
     });
 
     return moves
