@@ -29,6 +29,9 @@ initTable();  // 5x5 board
 function showMoves(piece) {
     //console.log(b.cell(piece.parentNode).get())
 
+    // check if game has ended
+    if (win) return
+
     // check if it's the turn of the piece
     if (b.cell(piece.parentNode).get() != turn[0]) {
         alert(`Not your turn! It's ${turn[0]}'s turn!`)
@@ -104,13 +107,13 @@ function movePiece() {
         //Update turn text
         switch (turn[0]) {
             case "P1":
-                document.getElementById("turn").innerHTML = `P1 turn to move`
+                document.getElementById("turn").innerHTML = `It's P1 turn to move`
                 break;
             case "P2":
-                document.getElementById("turn").innerHTML = `P2 turn to move`;
+                document.getElementById("turn").innerHTML = `It's P2 turn to move`;
                 break;
             case "CO":
-                document.getElementById("turn").innerHTML = `common piece turn (${turn[1]})`;
+                document.getElementById("turn").innerHTML = `It's common piece turn (${turn[1]})`;
                 break;
         }
 
@@ -254,14 +257,16 @@ function getMoves(piece) {
  */
 function winCheck() {
     var game = getGameboard()
+
     if (game[0].includes("3")) {
         win = true
-        if (gamemode) alert("P1 WINS")
-        else alert("P2 WINS")
+        alert(`${gamemode ? "P1 WINS" : "P2 WINS"}`);
+        document.getElementById("turn").innerHTML = `${gamemode ? "P1 WINS" : "P2 WINS"}`;
     } else if (game[b.rows() - 1].includes("3")) {
         win = true
-        if (gamemode) alert("P2 WINS")
-        else alert("P1 WINS")
+        alert(`${gamemode ? "P2 WINS" : "P1 WINS"}`);
+        document.getElementById("turn").innerHTML = `${gamemode ? "P2 WINS" : "P1 WINS"}`;
+
     }
 }
 /**
