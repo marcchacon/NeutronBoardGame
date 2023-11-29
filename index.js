@@ -19,11 +19,8 @@ var common = jsboard.piece({ text: "CO", textIndent: "-9999px", background: "gre
 // variables for turns, piece to move and its locs
 var turn = ["CO", "P1", "CO", "P2"];
 var bindMoveLocs, bindMovePiece;
-var gamemode = false;
-var started = false;
-var win = false;
-var P1 = [];
-var P2 = [];
+var gamemode, started, win = false;
+var P1, P2 = [];
 
 // create board
 initTable();  // 5x5 board
@@ -31,11 +28,13 @@ initTable();  // 5x5 board
 // show new locations 
 function showMoves(piece) {
     //console.log(b.cell(piece.parentNode).get())
+
+    // check if it's the turn of the piece
     if (b.cell(piece.parentNode).get() != turn[0]) {
         alert(`Not your turn! It's ${turn[0]}'s turn!`)
         return
     }
-    //Reset board
+
     resetBoard()
 
     // parentNode is needed because the piece you are clicking 
@@ -55,6 +54,7 @@ function showMoves(piece) {
         newLocs = fixedLocs;
     })(newLocs);
     if (newLocs.length == 0) alert(`No moves available! ${turn.pop()} wins!`);
+
     // bind green spaces to movement of piece
     bindMoveLocs = newLocs.slice();
     bindMovePiece = piece;
@@ -97,8 +97,11 @@ function movePiece() {
         b.cell(userClick).place(bindMovePiece);
         resetBoard();
 
+        //Update turn
         var temp = turn.shift();
         turn.push(temp);
+
+        //Update turn text
         switch (turn[0]) {
             case "P1":
                 document.getElementById("turn").innerHTML = `P1 turn to move`
@@ -117,7 +120,8 @@ function movePiece() {
 
 /**
  * Reset the board by removing all green cells and
- * removing all click events
+ * removing all click events.
+ * If hard is true, also resets the game
  * 
  * @param {boolean} hard If true, also resets the game
  * @return {void}
@@ -186,7 +190,7 @@ function resetBoard(hard = false) {
 /**
  * Aux function to get the gameboard
  * 
- * @returns {Array} Gameboard
+ * @returns {Array} Gameboard, 0 = empty, 1 = P1, 2 = P2, 3 = CO
  */
 function getGameboard() {
 
@@ -226,7 +230,7 @@ function getMoves(piece) {
     var game = getGameboard()
     var moves = []
 
-    directions.forEach((dir, index) => {
+    directions.forEach((dir) => {
         var newpos = piece
 
         while (Array.isArray(game[newpos[0] + dir[0]])) {
@@ -246,6 +250,7 @@ function getMoves(piece) {
 
 /**
  * Check if someone has won
+ * If gamemode is true, P1 wins if he reaches the P2 side
  */
 function winCheck() {
     var game = getGameboard()
@@ -276,7 +281,7 @@ function initTable(size = 5) {
 }
 
 
-//Listeners
+//Listeners for UI buttons
 document.getElementById("reset").addEventListener("click", function () { resetBoard(true); });
 document.getElementById("gamemodeN").addEventListener("click", function () {
     gamemode = false;

@@ -1,5 +1,6 @@
 # NeutronBoardGame
-This is a JavaScript code to play a very unknown game called [Neutron](https://boardgamegeek.com/boardgame/6978/neutron)! 
+This is a JavaScript code to play a very unknown game called [Neutron](https://boardgamegeek.com/boardgame/6978/neutron).
+You can play it [here](https://marcchacon.github.io/NeutronBoardGame/)!
 
 Thanks to @danielborowski for creating [jsboard](https://github.com/danielborowski/jsboard)!
 
