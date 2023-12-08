@@ -13,7 +13,7 @@ const directions = [
 
 // setup pieces
 var player1 = jsboard.piece({ text: "P1", textIndent: "-9999px", background: "#E63D30", width: "60px", height: "60px", margin: "0 auto", "border-radius": "50%" });
-var player2 = jsboard.piece({ text: "P2", textIndent: "-9999px", background: "#149fcd", width: "60px", height: "60px", margin: "0 auto", "border-radius": "50%" });
+var player2 = jsboard.piece({ text: "P2", textIndent: "-9999px", background: "#3038E6", width: "60px", height: "60px", margin: "0 auto", "border-radius": "50%" });
 var common = jsboard.piece({ text: "CO", textIndent: "-9999px", background: "#039963", width: "60px", height: "60px", margin: "0 auto", "border-radius": "50%" });
 
 // variables for turns, piece to move and its locs
