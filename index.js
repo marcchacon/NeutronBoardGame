@@ -12,9 +12,9 @@ const directions = [
 
 
 // setup pieces
-var player1 = jsboard.piece({ text: "P1", textIndent: "-9999px", background: "red", width: "50px", height: "50px", margin: "0 auto" });
-var player2 = jsboard.piece({ text: "P2", textIndent: "-9999px", background: "blue", width: "50px", height: "50px", margin: "0 auto" });
-var common = jsboard.piece({ text: "CO", textIndent: "-9999px", background: "green", width: "50px", height: "50px", margin: "0 auto" });
+var player1 = jsboard.piece({ text: "P1", textIndent: "-9999px", background: "#E63D30", width: "60px", height: "60px", margin: "0 auto", "border-radius": "50%" });
+var player2 = jsboard.piece({ text: "P2", textIndent: "-9999px", background: "#149fcd", width: "60px", height: "60px", margin: "0 auto", "border-radius": "50%" });
+var common = jsboard.piece({ text: "CO", textIndent: "-9999px", background: "#039963", width: "60px", height: "60px", margin: "0 auto", "border-radius": "50%" });
 
 // variables for turns, piece to move and its locs
 var turn = ["CO", "P1", "CO", "P2"];
@@ -56,7 +56,10 @@ function showMoves(piece) {
                 fixedLocs.push(arr[i]);
         newLocs = fixedLocs;
     })(newLocs);
-    if (newLocs.length == 0) alert(`No moves available! ${turn.pop()} wins!`);
+    if (newLocs.length == 0 && turn[0] == "CO") {
+        alert(`No moves available! ${turn.pop()} wins!`);
+        win = true;
+    }
 
     // bind green spaces to movement of piece
     bindMoveLocs = newLocs.slice();
