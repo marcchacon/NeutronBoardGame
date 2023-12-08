@@ -19,12 +19,8 @@ var common = jsboard.piece({ text: "CO", textIndent: "-9999px", background: "#03
 // variables for turns, piece to move and its locs
 var turn = ["CO", "P1", "CO", "P2"];
 var bindMoveLocs, bindMovePiece;
-var gamemode, started, win = false;
-var P1, P2 = [];
-
-// create board
-initTable();  // 5x5 board
-
+var gamemode, started, win, CPU = false;
+var P1, P2, CO = [];
 // show new locations 
 function showMoves(piece) {
     //console.log(b.cell(piece.parentNode).get())
@@ -101,6 +97,18 @@ function movePiece() {
     var userClick = b.cell(this).where();
     if (bindMoveLocs.indexOf(userClick)) {
         b.cell(userClick).place(bindMovePiece);
+        switch (turn[0]) {
+            case "P1":
+                P1.find(piece => piece[0] == bindMovePiece)[1] = userClick;
+                break;
+            case "P2":
+                P2.find(piece => piece[0] == bindMovePiece)[1] = userClick;
+                break;
+            case "CO":
+                CO.find(piece => piece[0] == bindMovePiece)[1] = userClick;
+                break;
+        }
+
         resetBoard();
 
         //Update turn
@@ -121,6 +129,10 @@ function movePiece() {
         }
 
         winCheck();
+
+        if (CPU && turn[1] == "P2") {
+            CPUturn();
+        }
     }
 }
 
@@ -133,6 +145,11 @@ function movePiece() {
  * @return {void}
  */
 function resetBoard(hard = false) {
+
+    if (started && !win && hard) {
+        var text = "Do you really want to restart the game?";
+        if (!confirm(text)) return
+    }
 
     for (var r = 0; r < b.rows(); r++) {
         for (var c = 0; c < b.cols(); c++) {
@@ -155,37 +172,36 @@ function resetBoard(hard = false) {
 
     if (hard) {
 
-        //config reset
-        if (started && !win) {
-            var text = "Do you really want to restart the game?";
-            if (!confirm(text)) return
-        }
-        
         // reset game state
         started = false;
         win = false;
-        
+
         //put pieces in place
-        var P1 = [];
-        var P2 = [];
+        P1 = [];
+        P2 = [];
+        CO = [];
+
         for (let i = 0; i < b.cols(); i++) {
-            P1.push(player1.clone());
-            P2.push(player2.clone());
-            b.cell([0, i]).place(P2[i]);
-            P1[i].addEventListener("click", function () { showMoves(this); });
-            P2[i].addEventListener("click", function () { showMoves(this); });
-            b.cell([b.rows() - 1, i]).place(P1[i]);
+
+            P1.push([player1.clone(), [b.rows() - 1, i]]);
+            P2.push([player2.clone(), [0, i]]);
+
+            b.cell(P2[i][1]).place(P2[i][0]);
+            b.cell(P1[i][1]).place(P1[i][0]);
+
+            P1[i][0].addEventListener("click", function () { showMoves(this); });
+            P2[i][0].addEventListener("click", function () { showMoves(this); });
         }
 
-        var co = common.clone();
-        b.cell([Math.floor((b.rows()-1)/2), Math.floor((b.cols()-1)/2)]).place(co);
-        co.addEventListener("click", function () { showMoves(this); });
+        CO.push([common.clone(), [Math.floor((b.rows() - 1) / 2), Math.floor((b.cols() - 1) / 2)]])
+        b.cell(CO[0][1]).place(CO[0][0]);
+        CO[0][0].addEventListener("click", function () { showMoves(this); });
         if (b.rows() % 2 == 1 && b.rows() > 5) {
-            var co2 = common.clone();
-            
-            b.cell([Math.floor((b.rows()-1)/2), ((b.rows()-1)/2)-1]).place(co);
-            b.cell([Math.floor((b.rows()-1)/2), ((b.rows()-1)/2)+1]).place(co2);
-            co2.addEventListener("click", function () { showMoves(this); });
+            CO.push([common.clone(), [Math.floor((b.rows() - 1) / 2), Math.floor((b.cols() - 1) / 2) + 1]])
+
+            b.cell([Math.floor((b.rows() - 1) / 2), ((b.rows() - 1) / 2) - 1]).place(CO[0][0]);
+            b.cell([Math.floor((b.rows() - 1) / 2), ((b.rows() - 1) / 2) + 1]).place(CO[1][0]);
+            CO[1][0].addEventListener("click", function () { showMoves(this); });
         }
 
         // variables for turns, piece to move and its locs
@@ -229,11 +245,11 @@ function getGameboard() {
  *  Get pieces possible moves
  * 
  * @param {Array} piece Piece position
+ * @param {Array} game Gameboard, default current gameboard
  * @returns {Array} Possible moves, empty if no moves
  */
-function getMoves(piece) {
+function getMoves(piece, game = getGameboard()) {
 
-    var game = getGameboard()
     var moves = []
 
     directions.forEach((dir) => {
@@ -281,10 +297,11 @@ function initTable(size = 5) {
         table.deleteRow(0);
     }
 
-    b = jsboard.board({ attach: "game", size: `${size}x${size}`});
+    b = jsboard.board({ attach: "game", size: `${size}x${size}` });
     b.cell("each").style({ width: "65px", height: "65px" });
     started = false;
     resetBoard(true);
+
 
 }
 
@@ -314,3 +331,259 @@ document.getElementById("size7").addEventListener("click", function () {
     this.disabled = true;
     document.getElementById("size5").disabled = false;
 });
+document.getElementById("CPU").addEventListener("click", function () {
+    CPU = true;
+    this.disabled = true;
+    document.getElementById("2P").disabled = false;
+});
+document.getElementById("2P").addEventListener("click", function () {
+    CPU = false;
+    this.disabled = true;
+    document.getElementById("CPU").disabled = false;
+});
+// create board
+initTable();  // 5x5 board
+
+//CPU
+//TODO: implement CPU using minimax algorithm
+/**
+ * 
+ * minimax logic for common piece:
+ * - If the user wins -1 (depth 1)
+
+- If it makes the user win without the option to cover it 1 (depth 2)
+- If it does not make the user win but the user can block piece 2 (depth 4)
+
+- If it makes the user win but can be covered: 5 (depth 2)
+
+//path is the route for the user to win
+- If a piece of the user covers the path: 6 (depth 1)
+- If two pieces cover the path: 7 (depth 1)
+
+- If it makes the CPU win but the user can avoid it in vertical/horizontal 8 (depth 3)
+- If it makes the CPU win but the user can avoid it in diagonal 9 (depth 3)
+- If it makes the CPU win and the user can't cover it 10 (depth 3)
+
+- If the user is forced to move the piece in the direction that makes the CPU win 11 (depth 3)
+- If the CPU can block piece 11 (depth 3)
+- If the CPU wins 11 (depth 1)
+ */
+function CPUturn() {
+    var game = getGameboard();
+    var [commonloc, , CPUPieces] = getPicecesLocs(game);
+    var gameTree = {};
+    var bestMove = {};
+
+    commonloc.forEach((CommonFirstLoc) => {
+        CommonFirstLocKey = `Common-${CommonFirstLoc[0]}-${CommonFirstLoc[1]}`;
+        gameTree[CommonFirstLocKey] = { points: null, bestMove: {}, moves: {} };
+        var commonmoves = getMoves(CommonFirstLoc, game);
+
+
+        commonmoves.forEach((CommonFirstMove) => {
+
+            var newgameD1 = game.map(arr => [...arr]);
+            newgameD1[commonloc[0][0]][commonloc[0][1]] = "0";
+            newgameD1[CommonFirstMove[0]][CommonFirstMove[1]] = "3";
+
+            var commonFirstMoveKey = `MoveTo-${CommonFirstMove[0]}-${CommonFirstMove[1]}`;
+            gameTree[CommonFirstLocKey].moves[commonFirstMoveKey] = { points: null, bestMove: {}, moves: {} };
+
+            if (winCheckCPU(newgameD1) == "P1") {
+                gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].points = -1;
+                gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].bestMove.points = -1;
+            } else if (winCheckCPU(newgameD1) == "CPU") {
+                gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].points = 11;
+                gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].bestMove.points = 11;
+            } else {
+
+                CPUPieces.forEach((CPUPiece) => {
+                    var CPUMove = getMoves(CPUPiece, newgameD1.map(arr => [...arr]));
+
+                    var CPUPieceKey = `Piece-${CPUPiece[0]}-${CPUPiece[1]}`;
+                    gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey] = { points: null, bestMove: {}, moves: {} };
+
+                    CPUMove.forEach((CPUPieceMove) => {
+                        var newgameD2 = newgameD1.map(arr => [...arr]);
+                        newgameD2[CPUPiece[0]][CPUPiece[1]] = "0";
+                        newgameD2[CPUPieceMove[0]][CPUPieceMove[1]] = "2";
+
+                        var CPUMoveKey = `MoveTo-${CPUPieceMove[0]}-${CPUPieceMove[1]}`;
+                        gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey] = { points: null, bestMove: {}, moves: {} };
+
+                        var [commonloc2, ,] = getPicecesLocs(newgameD2);
+
+                        commonloc2.forEach((CommonSecondLoc) => {
+                            var commonloc2Key = `Common-${CommonSecondLoc[0]}-${CommonSecondLoc[1]}`;
+                            gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].moves[commonloc2Key] = { points: null, bestMove: {}, moves: {} };
+
+                            var commonmoves2 = getMoves(CommonSecondLoc, newgameD2);
+                            commonmoves2.forEach((NeutronMove2) => {
+                                var newgameD3 = newgameD2.map(arr => [...arr]);
+                                newgameD3[commonloc2[0][0]][commonloc2[0][1]] = "0";
+                                newgameD3[NeutronMove2[0]][NeutronMove2[1]] = "3";
+
+                                var commonMove2Key = `MoveTo-${NeutronMove2[0]}-${NeutronMove2[1]}`;
+                                gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].moves[commonloc2Key].moves[commonMove2Key] = { points: null, bestMove: {}, moves: {} };
+
+                                var points = 11
+                                if (winCheckCPU(newgameD3) == "P1") {
+                                    points = 1;
+                                } else if (winCheckCPU(newgameD3) == "CPU") {
+                                    points = 8;
+                                } else {
+                                    points = 5;
+                                }
+                                gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].moves[commonloc2Key].moves[commonMove2Key].points = points;
+
+                                //Here we check if the move is better than the previous one
+                                //As the player is who moves the common piece, we want to minimize the points
+                                if (points < gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].moves[commonloc2Key].bestMove.points || gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].moves[commonloc2Key].bestMove.points == undefined) {
+                                    gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].moves[commonloc2Key].bestMove = { move: commonMove2Key, points: points };
+                                }
+                            });
+
+                            //Here we check if the move is better than the previous one
+                            //As the CPU is who moves the common piece, we want to mazimize the points
+                            if (gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].bestMove.points < gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].moves[commonloc2Key].bestMove.points || gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].bestMove.points == undefined) {
+                                gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].bestMove = { move: commonloc2Key, points: gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].moves[commonloc2Key].bestMove.points };
+                            }
+
+                        });
+
+                        //Here we check if the move is better than the previous one
+                        //As the CPU is who moves the common piece, we want to mazimize the points
+                        if (gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].bestMove.points < gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].bestMove.points || gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].bestMove.points == undefined) {
+                            gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].bestMove = { move: CPUMoveKey, points: gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].moves[CPUMoveKey].bestMove.points };
+                        }
+
+                    });
+
+                    //Here we check if the move is better than the previous one
+                    //As the CPU is who moves the common piece, we want to mazimize the points
+                    if (gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].bestMove.points < gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].bestMove.points || gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].bestMove.points == undefined) {
+                        gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].bestMove = { move: CPUPieceKey, points: gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].moves[CPUPieceKey].bestMove.points };
+                    }
+                });
+            }
+
+            //Here we check if the move is better than the previous one
+            //As the CPU is who moves the common piece, we want to mazimize the points
+            //console.log(gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].bestMove.points)
+            if (gameTree[CommonFirstLocKey].bestMove.points < gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].bestMove.points || gameTree[CommonFirstLocKey].bestMove.points == undefined) {
+                gameTree[CommonFirstLocKey].bestMove = { move: commonFirstMoveKey, points: gameTree[CommonFirstLocKey].moves[commonFirstMoveKey].bestMove.points };
+            }
+
+        });
+
+        //Here we check if the move is better than the previous one
+        //As the CPU is who moves the common piece, we want to mazimize the points
+        if (bestMove.points < gameTree[CommonFirstLocKey].bestMove.points || bestMove.points == undefined) {
+            bestMove = { move: CommonFirstLocKey, points: gameTree[CommonFirstLocKey].bestMove.points };
+        }
+    });
+
+    console.log(gameTree);
+
+    //Wait half a second to move the piece
+    setTimeout(() => {
+        var CommonPos = bestMove.move.split("-").slice(1).map(Number);
+        var CommonMove = gameTree[bestMove.move].bestMove.move.split("-").slice(1).map(Number);
+        movePieceCPU(CommonPos, CommonMove);
+
+        //Wait half a second to move the piece
+        setTimeout(() => {
+            var CPUPiece = gameTree[bestMove.move].moves[gameTree[bestMove.move].bestMove.move].bestMove.move.split("-").slice(1).map(Number);
+            var CPUMove = gameTree[bestMove.move].moves[gameTree[bestMove.move].bestMove.move].moves[gameTree[bestMove.move].moves[gameTree[bestMove.move].bestMove.move].bestMove.move].bestMove.move.split("-").slice(1).map(Number);
+            movePieceCPU(CPUPiece, CPUMove);
+        }, 500);
+    }, 500);
+
+    // Ara gameTree conté l'arbre de joc amb les puntuacions per a cada estat del joc.
+    // Pots utilitzar aquest arbre per a seleccionar el millor moviment.
+}
+
+function getPicecesLocs(board = getGameboard()) {
+    var commonloc = []
+    var P1locs = []
+    var P2locs = []
+
+    board.forEach((row, index) => {
+        row.forEach((col, index2) => {
+            switch (col) {
+                case "1":
+                    P1locs.push([index, index2]);
+                    break;
+                case "2":
+                    P2locs.push([index, index2]);
+                    break;
+                case "3":
+                    commonloc.push([index, index2]);
+                    break;
+            }
+        });
+    });
+
+    return [commonloc, P1locs, P2locs]
+}
+
+/**
+ * Aux function for CPU to check if someone has won
+ * 
+*/
+function winCheckCPU(game) {
+    if (game[0].includes("3")) {
+        return "CPU"
+    } else if (game[b.rows() - 1].includes("3")) {
+        return "P1"
+    }
+    return false
+}
+
+/**
+ * Aux function for CPU to move the pieces
+ * 
+ * @param {Array} pieceOrigin Piece position
+ * @param {Array} loc New location
+ * @return {void}
+ */
+function movePieceCPU(pieceOrigin, loc) {
+    started = true;
+    var pieceValue = b.cell(pieceOrigin).get();
+    switch (pieceValue) {
+        case "P1":
+            var piece = P1.find(temp => temp[1].toString() == pieceOrigin.toString())
+            break;
+        case "P2":
+            var piece = P2.find(temp => temp[1].toString() == pieceOrigin.toString())
+            break;
+        case "CO":
+            var piece = CO.find(temp => temp[1].toString() == pieceOrigin.toString())
+            break;
+        default:
+            return;
+    }
+    piece[1] = loc;
+    b.cell(loc).place(piece[0]);
+    resetBoard();
+
+    //Update turn
+    var temp = turn.shift();
+    turn.push(temp);
+
+    //Update turn text
+    switch (turn[0]) {
+        case "P1":
+            document.getElementById("turn").innerHTML = `It's P1 turn to move`
+            break;
+        case "P2":
+            document.getElementById("turn").innerHTML = `It's P2 turn to move`;
+            break;
+        case "CO":
+            document.getElementById("turn").innerHTML = `It's common piece turn (${turn[1]})`;
+            break;
+    }
+
+    winCheck();
+
+}
