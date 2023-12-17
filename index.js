@@ -368,7 +368,10 @@ initTable();  // 5x5 board
 - If the CPU can block piece 11 (depth 3)
 - If the CPU wins 11 (depth 1)
  */
-function CPUturn() {
+/**
+ * Old CPU turn function
+ */
+function CPUturn_OLD() {
     var game = getGameboard();
     var [commonloc, , CPUPieces] = getPicecesLocs(game);
     var gameTree = {};
@@ -482,6 +485,7 @@ function CPUturn() {
             bestMove = { move: CommonFirstLocKey, points: gameTree[CommonFirstLocKey].bestMove.points };
         }
     });
+    
 
     console.log(gameTree);
 
@@ -503,6 +507,122 @@ function CPUturn() {
     // Pots utilitzar aquest arbre per a seleccionar el millor moviment.
 }
 
+function CPUturn() {
+    var game = getGameboard();
+    var gameTree = CreateTree({}, game);
+    // [original pos, new pos]
+    var bestMove = [];
+    var bestCPUMove = [];
+    
+    Object.keys(gameTree).forEach((CommonFirstLocKey) => {
+        bestMove[0] = CommonFirstLocKey.split("-").slice(1).map(Number);
+        bestMove[1] = gameTree[CommonFirstLocKey].bestMove.move.split("-").slice(1).map(Number);
+
+        bestCPUMove[0] = gameTree[CommonFirstLocKey].moves[gameTree[CommonFirstLocKey].bestMove.move].bestMove.move.split("-").slice(1).map(Number);
+        bestCPUMove[1] = gameTree[CommonFirstLocKey].moves[gameTree[CommonFirstLocKey].bestMove.move].moves[gameTree[CommonFirstLocKey].moves[gameTree[CommonFirstLocKey].bestMove.move].bestMove.move].bestMove.move.split("-").slice(1).map(Number);
+    });
+
+    console.log("tree:", gameTree);
+    console.log("bestMove:", bestMove);
+    console.log("bestCPUMove:", bestCPUMove);
+
+    //Wait half a second to move the piece
+    setTimeout(() => {
+
+        movePieceCPU(bestMove[0], bestMove[1]);
+
+        //Wait half a second to move the piece
+        setTimeout(() => {
+            movePieceCPU(bestCPUMove[0], bestCPUMove[1]);
+        }, 500);
+    }, 500);
+
+    // Ara gameTree conté l'arbre de joc amb les puntuacions per a cada estat del joc.
+    // Pots utilitzar aquest arbre per a seleccionar el millor moviment.
+}
+
+function CreateTree (tree, game, turnCPU = ["3", "2", "3", "1"], depth = 4, maxdepth = 4) {
+    console.log(turnCPU[0])
+    if (depth == 0) {
+        return tree;
+    } else {
+        switch (turnCPU[0]) {
+            case "1":
+                var locs = getPicecesLocs(game)[1];
+                break;
+            case "2":
+                var locs = getPicecesLocs(game)[2];
+                break;
+            case "3":
+                var locs = getPicecesLocs(game)[0];
+                break;
+        }
+        
+        locs.forEach((FirstLoc) => {
+            var FirstLocKey = `${turnCPU[0]}-${FirstLoc[0]}-${FirstLoc[1]}`;
+            tree[FirstLocKey] = { points: 5, bestMove: {}, moves: {} };
+            var posMoves = getMoves(FirstLoc, game);
+
+            posMoves.forEach((FirstMove) => {
+                var FirstMoveKey = `MoveTo-${FirstMove[0]}-${FirstMove[1]}`;
+                tree[FirstLocKey].moves[FirstMoveKey] = { points: 5, bestMove: {}, moves: {} };
+
+                var newgameD1 = game.map(arr => [...arr]);
+                newgameD1[FirstLoc[0]][FirstLoc[1]] = "0";
+                newgameD1[FirstMove[0]][FirstMove[1]] = turnCPU[0];
+
+                var newturnCPU = turnCPU.map(arr => arr);
+                console.log(newturnCPU)
+                var temp = newturnCPU.shift();
+                newturnCPU.push(temp);
+
+                var points = 5
+                if (winCheckCPU(newgameD1) == "P1") {
+                    points = -10+(maxdepth-depth);
+                    tree[FirstLocKey].moves[FirstMoveKey].points = points;
+                    tree[FirstLocKey].moves[FirstMoveKey].bestMove.points = points;
+                } else if (winCheckCPU(newgameD1) == "CPU") {
+                    points = 20-(maxdepth-depth);
+                    tree[FirstLocKey].moves[FirstMoveKey].points = points;
+                    tree[FirstLocKey].moves[FirstMoveKey].bestMove.points = points;
+                } else {
+                    tree[FirstLocKey].moves[FirstMoveKey].moves = CreateTree(tree[FirstLocKey].moves[FirstMoveKey].moves, newgameD1, newturnCPU, depth - 1, maxdepth);
+
+                    var tempTree = tree[FirstLocKey].moves[FirstMoveKey].moves;
+                    Object.keys(tempTree).forEach((move) => {
+                        if (tempTree[move].points == undefined) {
+                            points = 5;
+                        } else if (tempTree[move].points > points) {
+                            points = tempTree[move].points;
+                        }
+                        
+                        if (tree[FirstLocKey].moves[FirstMoveKey].bestMove.points == undefined || points > tree[FirstLocKey].moves[FirstMoveKey].bestMove.points) {
+                            tree[FirstLocKey].moves[FirstMoveKey].bestMove = { move: move, points: points };
+                        }
+
+                    });
+                    
+                }  
+
+            });
+
+            var tempTree = tree[FirstLocKey].moves;
+            console.log("tempTree", tempTree)
+            var points = -Infinity;
+            Object.keys(tempTree).forEach((move) => {
+                 if (tempTree[move].bestMove.points > points) {
+                    points = tempTree[move].bestMove.points;
+                    tree[FirstLocKey].bestMove = { move: move, points: tempTree[move].bestMove.points };
+                    tree[FirstLocKey].points = tempTree[move].bestMove.points;  
+                }
+            })
+            
+
+        });
+
+        return tree;
+    }
+}
 function getPicecesLocs(board = getGameboard()) {
     var commonloc = []
     var P1locs = []
