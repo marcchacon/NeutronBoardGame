@@ -1,3 +1,5 @@
+const { MoveNode, SelectionNode } = require('./TreeClass.js').default;
+
 // The directions a piece can move
 const directions = [
     [-1, -1], // adalt esquerra
@@ -576,41 +578,49 @@ function CreateTree (tree, game, turnCPU = ["3", "2", "3", "1"], depth = 4, maxd
                 var temp = newturnCPU.shift();
                 newturnCPU.push(temp);
 
-                var points = 5
-                if (winCheckCPU(newgameD1) == "P1") {
-                    points = -10+(maxdepth-depth);
-                    tree[FirstLocKey].moves[FirstMoveKey].points = points;
-                    tree[FirstLocKey].moves[FirstMoveKey].bestMove.points = points;
-                } else if (winCheckCPU(newgameD1) == "CPU") {
-                    points = 20-(maxdepth-depth);
-                    tree[FirstLocKey].moves[FirstMoveKey].points = points;
-                    tree[FirstLocKey].moves[FirstMoveKey].bestMove.points = points;
-                } else {
-                    tree[FirstLocKey].moves[FirstMoveKey].moves = CreateTree(tree[FirstLocKey].moves[FirstMoveKey].moves, newgameD1, newturnCPU, depth - 1, maxdepth);
+                var points = 5;
+                switch (winCheckCPU(newgameD1)) {
+                    case "P1":
+                        points = -10 + (maxdepth - depth);
+                        tree[FirstLocKey].moves[FirstMoveKey].points = points;
+                        tree[FirstLocKey].moves[FirstMoveKey].bestMove.points = points;
+                        break;
+                    case "CPU":
+                        points = 20 - (maxdepth - depth);
+                        tree[FirstLocKey].moves[FirstMoveKey].points = points;
+                        tree[FirstLocKey].moves[FirstMoveKey].bestMove.points = points;
+                        break;
+                    default:
+                        tree[FirstLocKey].moves[FirstMoveKey].moves = CreateTree(tree[FirstLocKey].moves[FirstMoveKey].moves, newgameD1, newturnCPU, depth - 1, maxdepth);
 
-                    var tempTree = tree[FirstLocKey].moves[FirstMoveKey].moves;
-                    Object.keys(tempTree).forEach((move) => {
-                        if (tempTree[move].points == undefined) {
+                        if (tree[FirstLocKey].moves[FirstMoveKey].moves != {}) {
+                            var tempTree = tree[FirstLocKey].moves[FirstMoveKey].moves;
+                            
+                            Object.keys(tempTree).forEach((move) => {
+                                if (tempTree[move].points == undefined) {
+                                    points = 5;
+                                } else if (tempTree[move].points > points) {
+                                    points = tempTree[move].points;
+                                }
+    
+                                if (tree[FirstLocKey].moves[FirstMoveKey].bestMove.points == undefined || points > tree[FirstLocKey].moves[FirstMoveKey].bestMove.points) {
+                                    tree[FirstLocKey].moves[FirstMoveKey].bestMove = { move: move, points: points };
+                                }
+                            });
+                        } else {
                             points = 5;
-                        } else if (tempTree[move].points > points) {
-                            points = tempTree[move].points;
+                            tree[FirstLocKey].moves[FirstMoveKey].points = points;
+                            tree[FirstLocKey].moves[FirstMoveKey].bestMove.points = points;
                         }
-                        
-                        if (tree[FirstLocKey].moves[FirstMoveKey].bestMove.points == undefined || points > tree[FirstLocKey].moves[FirstMoveKey].bestMove.points) {
-                            tree[FirstLocKey].moves[FirstMoveKey].bestMove = { move: move, points: points };
-                        }
-
-                    });
-                    
-                }  
-
+                        break;
+                }
             });
 
             var tempTree = tree[FirstLocKey].moves;
             console.log("tempTree", tempTree)
-            var points = -Infinity;
+            var points = null;
             Object.keys(tempTree).forEach((move) => {
-                 if (tempTree[move].bestMove.points > points) {
+                 if (tempTree[move].bestMove.points > points || points == null) {
                     points = tempTree[move].bestMove.points;
                     tree[FirstLocKey].bestMove = { move: move, points: tempTree[move].bestMove.points };
                     tree[FirstLocKey].points = tempTree[move].bestMove.points;  
