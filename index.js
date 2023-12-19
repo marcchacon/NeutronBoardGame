@@ -555,6 +555,8 @@ function CPUturn() {
     gameTree.selections = CreateTree(gameTree.selections, game);
     // [original pos, new pos]
     var points = -Infinity
+    var CommonMove;
+    var CPUMove;
     var bestMove = [];
     var bestCPUMove = [];
     
@@ -567,15 +569,16 @@ function CPUturn() {
         if (selection.getPoints() > points) {
             points = selection.getPoints();
 
-            bestMove[0] = selection.getSelection();
-            bestMove[1] = selection.getBestMove().getMove();
-
-            var temp = selection.getBestMove().getBestSelection()
-
-            bestCPUMove[0] = temp.getSelection();
-            bestCPUMove[1] = temp.getBestMove().getMove();
+            CommonMove = selection;
         }
     });
+    if (CommonMove.getBestMove() == null) {
+        alert(`No moves available! ${turn.pop()} wins!`);
+        win = true;
+        return;
+    }
+    bestMove[0] = CommonMove.getSelection();
+    bestMove[1] = CommonMove.getBestMove().getMove();
 
     console.log("tree:", gameTree);
     console.log("bestMove:", bestMove);
@@ -586,10 +589,18 @@ function CPUturn() {
 
         movePieceCPU(bestMove[0], bestMove[1]);
 
-        //Wait half a second to move the piece
-        setTimeout(() => {
+        if (!win)  {
+            //Wait half a second to move the piece
+            setTimeout(() => {
+            
+            var temp = CommonMove.getBestMove().getBestSelection()
+
+            bestCPUMove[0] = temp.getSelection();
+            bestCPUMove[1] = temp.getBestMove().getMove();
+
             movePieceCPU(bestCPUMove[0], bestCPUMove[1]);
         }, 500);
+        }
     }, 500);
 
     // Ara gameTree conté l'arbre de joc amb les puntuacions per a cada estat del joc.
