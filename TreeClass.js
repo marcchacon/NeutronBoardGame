@@ -4,6 +4,13 @@ class SelectionNode {
     INVALID_POINTS_ERROR = new Error("Invalid points, points must be a Number");
     INVALID_MOVE_POINTER_ERROR = new Error("Invalid move pointer, pointer must be a Key in moves");
 
+    /**
+     * Creates a new SelectionNode
+     * @param {Array} selection must be [y,x]
+     * @param {Array} gameState the Game Board
+     * @param {Array} turn the Turn State
+     * @param {MoveNode} parent Parent Node
+     */
     constructor(selection, gameState, turn, parent = undefined) {
         this.setParent(parent);
         this.selection = selection;
@@ -20,7 +27,7 @@ class SelectionNode {
      * @throws INVALID_MOVE_ERROR if parent is not a MoveNode nor undefined
      */
     setParent(parent) {
-        if (parent.instanceof(MoveNode) || parent === undefined) {
+        if (parent === undefined || parent instanceof MoveNode) {
           this.parent = parent;
         } else throw this.INVALID_MOVE_ERROR;
     }
@@ -39,7 +46,7 @@ class SelectionNode {
      * @param {Number} points the points of this node
      */
     setPoints(points) {
-      if (points.instanceof(Number)) {
+      if (typeof points === 'number') {
         this.points = points;
       } else throw this.INVALID_POINTS_ERROR;
     }
@@ -119,15 +126,15 @@ class SelectionNode {
      * @throws INVALID_MOVE_ERROR if move is not a MoveNode
      */
     addMove(move) {
-        if (move.instanceof(MoveNode)) {
-          this.moves.push(move);
-          move.setParent(this);
+        if (move instanceof MoveNode) {
+          this.moves[`Move-${Object.keys(this.moves).length}`] = move;
+          if (move.getParent() === undefined) move.setParent(this);
         } else throw this.INVALID_MOVE_ERROR;
     }
 
     /**
      * Gets the selection of this node
-     * @returns {Object} the selection of this node
+     * @returns {Array} the selection of this node
      */
     getSelection() {
         return this.selection;
@@ -147,17 +154,18 @@ class SelectionNode {
      * @returns {String} the best move for this node, undefined if there are no moves
      */
     calculateBestMove(inverted = false) {
-        if (this.moves.length > 0) {
+        if (Object.keys(this.moves).length > 0) {
             let bestMove = undefined;
             let bestPoints = inverted ? Infinity : -Infinity; // Initialize bestPoints based on the inverted flag
-            for (const move of this.moves) {
+            for (const moveKey in this.moves) {
+                const move = this.moves[moveKey];
                 const points = move.getPoints();
                 if ((inverted && points < bestPoints) || (!inverted && points > bestPoints)) {
-                    bestMove = move;
+                    bestMove = moveKey;
                     bestPoints = points;
                 }
             }
-            return bestMove ? Object.keys(bestMove.getMove()) : undefined;
+            return bestMove;
         }
         return undefined;
     }
@@ -171,8 +179,13 @@ class MoveNode {
     INVALID_POINTS_ERROR = new Error("Invalid points, points must be a Number");
     INVALID_SELECTION_POINTER_ERROR = new Error("Invalid selection pointer, pointer must be a Key in selections");
 
-
-    constructor(move, gameState, parent) {
+    /**
+     * Creates a new MoveNode
+     * @param {Array} move must be [y,x]
+     * @param {Array} gameState the Game Board
+     * @param {SelectionNode} parent Parent Node
+     */
+    constructor(move, gameState, parent = undefined) {
         this.setParent(parent);
         this.move = move;
         this.gameState = gameState;
@@ -184,10 +197,10 @@ class MoveNode {
     /**
      * Sets the parent of this node
      * @param {SelectionNode} parent the parent of this node or undefined if this is the root node
-     * @throws INVALID_SELECTION_ERROR if parent is not a SelectionNode
+     * @throws INVALID_SELECTION_ERROR if parent is not a SelectionNode nor undefined
      */
     setParent(parent) {
-        if (parent.instanceof(SelectionNode)) {
+        if (parent === undefined || parent instanceof SelectionNode) {
           this.parent = parent;
         } else throw this.INVALID_SELECTION_ERROR;
     }
@@ -206,7 +219,7 @@ class MoveNode {
      * @param {Number} points the points of this node
      */
     setPoints(points) {
-        if (points.instanceof(Number)) {
+        if (typeof points === 'number') {
           this.points = points;
         } else throw this.INVALID_POINTS_ERROR;
     }
@@ -278,9 +291,9 @@ class MoveNode {
      * @throws INVALID_SELECTION_ERROR if move is not a MoveNode
      */
     addSelection(selection) {
-        if (selection.instanceof(SelectionNode)) {
-          this.selections.push(selection);
-          selection.setParent(this);
+        if (selection instanceof SelectionNode) {
+            this.selections[`Selection-${Object.keys(this.selections).length}`] = selection;
+            if (selection.getParent() === undefined) selection.setParent(this);
         } else throw this.INVALID_SELECTION_ERROR;
     }
 
@@ -306,20 +319,19 @@ class MoveNode {
      * @returns {String} the best selection for this node, undefined if there are no selections
      */
     calculateBestSelection(inverted = false) {
-        if (this.selections.length > 0) {
+        if (Object.keys(this.selections).length > 0) {
             let bestSelection = undefined;
             let bestPoints = inverted ? Infinity : -Infinity; // Initialize bestPoints based on the inverted flag
-            for (const selection of this.selections) {
+            for (const selectionKey in this.selections) {
+                const selection = this.selections[selectionKey];
                 const points = selection.getPoints();
                 if ((inverted && points < bestPoints) || (!inverted && points > bestPoints)) {
-                    bestSelection = selection;
+                    bestSelection = selectionKey;
                     bestPoints = points;
                 }
             }
-            return bestSelection ? Object.keys(bestSelection.getSelection()) : undefined;
+            return bestSelection;
         }
         return undefined;
     }
 }
-
-export default { MoveNode, SelectionNode };

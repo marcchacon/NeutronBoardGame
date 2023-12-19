@@ -1,5 +1,3 @@
-const { MoveNode, SelectionNode } = require('./TreeClass.js').default;
-
 // The directions a piece can move
 const directions = [
     [-1, -1], // adalt esquerra
@@ -370,8 +368,10 @@ initTable();  // 5x5 board
 - If the CPU can block piece 11 (depth 3)
 - If the CPU wins 11 (depth 1)
  */
+
 /**
- * Old CPU turn function
+ * DEPRECATED
+ * Original CPU turn function
  */
 function CPUturn_OLD() {
     var game = getGameboard();
@@ -508,8 +508,11 @@ function CPUturn_OLD() {
     // Ara gameTree conté l'arbre de joc amb les puntuacions per a cada estat del joc.
     // Pots utilitzar aquest arbre per a seleccionar el millor moviment.
 }
-
-function CPUturn() {
+/**
+ * DEPRECATED
+ * Second CPU turn function
+ */
+function CPUturn_OLDV2() {
     var game = getGameboard();
     var gameTree = CreateTree({}, game);
     // [original pos, new pos]
@@ -543,7 +546,67 @@ function CPUturn() {
     // Pots utilitzar aquest arbre per a seleccionar el millor moviment.
 }
 
-function CreateTree (tree, game, turnCPU = ["3", "2", "3", "1"], depth = 4, maxdepth = 4) {
+/**
+ * Current CPU turn function
+ */
+function CPUturn() {
+    var game = getGameboard();
+    var gameTree = new MoveNode(null, game);
+    gameTree.selections = CreateTree(gameTree.selections, game);
+    // [original pos, new pos]
+    var points = -Infinity
+    var bestMove = [];
+    var bestCPUMove = [];
+    
+    Object.keys(gameTree.selections).forEach((tmpselection) => {
+        let selection = gameTree.selections[tmpselection];
+        selection.getPoints()
+        console.log("tree:", gameTree);
+        console.log("selection",selection.getPoints())
+
+        if (selection.getPoints() > points) {
+            points = selection.getPoints();
+
+            bestMove[0] = selection.getSelection();
+            bestMove[1] = selection.getBestMove().getMove();
+
+            var temp = selection.getBestMove().getBestSelection()
+
+            bestCPUMove[0] = temp.getSelection();
+            bestCPUMove[1] = temp.getBestMove().getMove();
+        }
+    });
+
+    console.log("tree:", gameTree);
+    console.log("bestMove:", bestMove);
+    console.log("bestCPUMove:", bestCPUMove);
+
+    //Wait half a second to move the piece
+    setTimeout(() => {
+
+        movePieceCPU(bestMove[0], bestMove[1]);
+
+        //Wait half a second to move the piece
+        setTimeout(() => {
+            movePieceCPU(bestCPUMove[0], bestCPUMove[1]);
+        }, 500);
+    }, 500);
+
+    // Ara gameTree conté l'arbre de joc amb les puntuacions per a cada estat del joc.
+    // Pots utilitzar aquest arbre per a seleccionar el millor moviment.
+}
+
+/**
+ * DEPRECATED
+ * Old function to create the tree
+ * @param {Array} tree Tree to create
+ * @param {*} game GameBoard
+ * @param {*} turnCPU Turn State
+ * @param {*} depth Depth of the tree
+ * @param {*} maxdepth Depth of the original tree
+ * @returns {Array} Tree Created
+ */
+function CreateTree_OLD (tree, game, turnCPU = ["3", "2", "3", "1"], depth = 4, maxdepth = 4) {
     console.log(turnCPU[0])
     if (depth == 0) {
         return tree;
@@ -632,6 +695,105 @@ function CreateTree (tree, game, turnCPU = ["3", "2", "3", "1"], depth = 4, maxd
 
         return tree;
     }
+}
+
+/**
+ * Creates tree using Classes
+ * Minimax algorithm
+ * @param {Object} tree The MoveNode.selection object
+ * @param {Array} game GameBoard 
+ * @param {Array} turnCPU Turn State, 1 = P1, 2 = P2, 3 = CO. Default ["3", "2", "3", "1"] 
+ * @param {*} depth Depth of the tree. Default 4
+ * @param {*} maxdepth Depth of the original tree. Default 4
+ * @returns 
+ */
+function CreateTree (tree, game, turnCPU = ["3", "2", "3", "1"], depth = 4, maxdepth = 4) {
+    if (depth == 0) return {};
+    switch (turnCPU[0]) {
+        case "1":
+            var locs = getPicecesLocs(game)[1];
+            break;
+        case "2":
+            var locs = getPicecesLocs(game)[2];
+            break;
+        case "3":
+            var locs = getPicecesLocs(game)[0];
+            break;
+    }  
+
+    locs.forEach((FirstLoc, index) => {
+        var LocNode = new SelectionNode(FirstLoc, game, turnCPU);
+        tree[`Selection-${index}`] = LocNode;
+
+        var posMoves = getMoves(FirstLoc, game);
+
+        posMoves.forEach((FirstMove) => {
+            var newgameD1 = game.map(arr => [...arr]);
+            newgameD1[FirstLoc[0]][FirstLoc[1]] = "0";
+            newgameD1[FirstMove[0]][FirstMove[1]] = turnCPU[0];
+
+            var MovNode = new MoveNode(FirstMove, newgameD1, LocNode);
+            LocNode.addMove(MovNode);
+
+            var newturnCPU = turnCPU.map(arr => arr);
+            var temp = newturnCPU.shift();
+            newturnCPU.push(temp);
+
+            switch (winCheckCPU(newgameD1)) {
+                case "P1":
+                    MovNode.setPoints(-10 + (maxdepth - depth));
+                    break;
+                case "CPU":
+                    MovNode.setPoints(20 - (maxdepth - depth));
+                    break;
+                default:
+                    MovNode.selections = CreateTree(MovNode.selections, newgameD1, newturnCPU, depth - 1, maxdepth);
+
+                    if (Object.keys(MovNode.selections).length !== 0) {
+                        switch (turnCPU[1]) {
+                            case "1":
+                                let tempString = MovNode.calculateBestSelection(true);
+                                console.log("MovNode tempString", tempString)
+                                if (tempString !== undefined) {
+                                    MovNode.setBestSelection(tempString);
+                                } else MovNode.setPoints(20 - (maxdepth - depth));
+
+                                break;
+                            case "2":
+                            default:
+                                let tempString2 = MovNode.calculateBestSelection(false);
+                                console.log("MovNode tempString2", tempString2)
+                                if (tempString2 !== undefined) {
+                                    MovNode.setBestSelection(tempString2);
+                                } else MovNode.setPoints(-10 + (maxdepth - depth));
+                                break;
+                        }
+                    } else MovNode.setPoints(5);
+                    break;
+            }
+            
+        })
+
+        switch (turnCPU[1]) {
+            case "1":
+                let tempString = LocNode.calculateBestMove(true);
+                console.log("LocNode tempString", tempString)
+                if (tempString !== undefined) {
+                    LocNode.setBestMove(tempString);
+                } else LocNode.setPoints(5);
+                break;
+            case "2":
+            default:
+                let tempString2 = LocNode.calculateBestMove(false);
+                console.log("LocNode tempString2", tempString2)
+                if (tempString2 !== undefined) {
+                    LocNode.setBestMove(tempString2);
+                } else LocNode.setPoints(5);
+                break;
+        }
+    })
+    return tree;
+    
 }
 function getPicecesLocs(board = getGameboard()) {
     var commonloc = []
